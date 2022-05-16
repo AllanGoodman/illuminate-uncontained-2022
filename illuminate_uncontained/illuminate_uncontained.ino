@@ -35,9 +35,18 @@ CRGBPalette16              currentPalette; //sets what colours we can use
  */
 TBlendType                 currentBlending;
 
-//This function returns boolean of if an object has been detected
-int isDetected(){
-  
+//Misc Ultrasonic sensor stuff
+#define NUM_ULTRA_SENSORS   3
+#define DISTANCE_THRESHOLD  10 //change this as per your measurements :))
+
+//This function returns an array containing how far away an object is from each sensor
+int * distanceDetected(){
+  int buf[NUM_ULTRA_SENSORS] = {0};
+  for (int i = 0; i<NUM_ULTRA_SENSORS; i++){
+    buf[i] = 0; //Replace this with sensing the distance from the ultrasonic sensor
+  }
+
+  return buf;
 }
 
 //This function writes colour to the LEDs 
@@ -54,7 +63,7 @@ void setup() {
   //Initialise sensors
 
   //Initialise LEDs
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA, COLOUR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness(  BRIGHTNESS );
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
@@ -62,7 +71,9 @@ void setup() {
 
 void loop() {
   //Check sensors
-  if(isDetected()){
-    
+  for (int i; i<NUM_ULTRA_SENSORS; i++){
+    if(distanceDetected[i] < DISTANCE_THRESHOLD){
+      
+    }
   }
 }
