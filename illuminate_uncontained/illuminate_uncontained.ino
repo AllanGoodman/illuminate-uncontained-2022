@@ -39,6 +39,9 @@ TBlendType                 currentBlending;
 #define NUM_ULTRA_SENSORS   3
 #define DISTANCE_THRESHOLD  10 //change this as per your measurements :))
 
+// Global Variables
+int brightness = 0;
+
 //This function returns an array containing how far away an object is from each sensor
 int * distanceDetected(){
   int buf[NUM_ULTRA_SENSORS] = {0};
@@ -67,13 +70,79 @@ void setup() {
   FastLED.setBrightness(  BRIGHTNESS );
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
+  
 }
 
 void loop() {
+  static uint8_t startIndex = 0;
+  startIndex += 1;
+  //FillLEDsFromPaletteColors(startIndex, brightness);
   //Check sensors
-  for (int i; i<NUM_ULTRA_SENSORS; i++){
-    if(distanceDetected[i] < DISTANCE_THRESHOLD){
-      
+  int * buf = distanceDetected();
+  bool isClose = false;
+  for (int i; i<NUM_ULTRA_SENSORS; i++) {
+    if (buf[i] < DISTANCE_THRESHOLD) { 
+      isClose = true;
+      break;
     }
   }
+
+  if (isClose) { // pulse
+    
+  } else {
+    
+  }
+  
+  // PULSE CODE 
+  for (int brightness=0; brightness < 256;  brightness+= 2) {
+    //FastLED.setBrightness(brightness);
+    FillLEDsFromPaletteColors(startIndex, brightness);
+    FastLED.show();
+    delay(2);
+  }
+  //test
+  for (int brightness = 255; brightness > 2; brightness -= 2) {
+    //FastLED.setBrightness(brightness);
+    FillLEDsFromPaletteColors(startIndex, brightness);
+    FastLED.show();
+    delay(2);
+  }  
 }
+
+void FillLEDsFromPaletteColors( uint8_t colorIndex, int updated_brightness)
+{
+    
+    for( int i = 0; i < NUM_LEDS; i++) {
+        leds[i] = ColorFromPalette( currentPalette, colorIndex, updated_brightness, currentBlending);
+        colorIndex += 3;
+    }
+}
+
+// NOT USED YET 
+void pulse() {
+  // to detect distance use distanceDetected()
+  for (int brightness = 0; brightness < 256;  brightness+= 8) {
+    FastLED.setBrightness(brightness);
+    FastLED.show();
+    delay(300);
+  }
+  
+  for (int brightness = 255; brightness >= 0; brightness -= 8) {
+    FastLED.setBrightness(brightness);
+    FastLED.show();
+    delay(300);
+  }
+}
+
+// NOT USED YET 
+// Turns on one LED at a time chronologically then loops back to the start
+void chase() {
+  for (int ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++) { 
+    leds[ledIndex] = CRGB(0, 255, 0); // green colour
+    FastLED.show();
+    leds[ledIndex] = CRGB(0, 0, 0); // turn off 
+    delayMicroseconds(500);
+  }
+
+}
+ 
