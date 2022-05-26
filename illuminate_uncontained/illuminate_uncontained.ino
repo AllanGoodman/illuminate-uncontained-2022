@@ -94,6 +94,7 @@ void loop() {
   }
   
   // PULSE CODE 
+  /*
   for (int brightness=0; brightness < 256;  brightness+= 2) {
     //FastLED.setBrightness(brightness);
     FillLEDsFromPaletteColors(startIndex, brightness);
@@ -107,6 +108,8 @@ void loop() {
     FastLED.show();
     delay(2);
   }  
+  */
+  chase();
 }
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex, int updated_brightness)
@@ -139,10 +142,17 @@ void pulse() {
 void chase() {
   for (int ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++) { 
     leds[ledIndex] = CRGB(0, 255, 0); // green colour
+    leds[ledIndex + 1] = CRGB(0, 255, 0); // green colour
+    leds[ledIndex + 2] = CRGB(0, 255, 0); // green colour
+    leds[ledIndex + 3] = CRGB(0, 255, 0); // green colour
+    leds[ledIndex + 4] = CRGB(0, 255, 0); // green colour
     FastLED.show();
-    leds[ledIndex] = CRGB(0, 0, 0); // turn off 
-    delayMicroseconds(500);
+    leds[ledIndex] = CRGB(0, 0, 0); // turn off
+    leds[ledIndex + 1] = CRGB(0, 0, 0); // green colour
+    leds[ledIndex + 2] = CRGB(0, 0, 0); // green colour
+    leds[ledIndex + 3] = CRGB(0, 0, 0); // green colour
+    leds[ledIndex + 4] = CRGB(0, 0, 0); // green colour
+    delayMicroseconds(100000000);
   }
 
 }
- 
