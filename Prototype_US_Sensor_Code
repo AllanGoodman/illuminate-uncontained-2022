@@ -1,0 +1,61 @@
+#define receivePin 4 // attach pin D2 Arduino to pin Echo of HC-SR04
+#define sendPin 3 // attach pin D3 Arduino to pin Trig of HC-SR04
+
+#define receivePin2 10 // attach pin D2 Arduino to pin Echo of HC-SR04
+#define sendPin2 9 // attach pin D3 Arduino to pin Trig of HC-SR04
+
+int getDistance(int trigPin, int echoPin){
+  // Clear the sending pin of Arduino
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  
+  // Sets the sendPin HIGH (ACTIVE) for 10 microseconds (actual sending of pulse)
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  // Reads the receivePin, returns the sound wave travel time in microseconds (reception of reflection)
+  long duration = pulseIn(echoPin, HIGH);
+  
+  // Calculating the distance (half duration for go and back)
+  // 0.034 is speed of sound at room temperature
+  // temperature is inputted from temperature sensor
+  // temperature / 25 is ratio of current temp to room temp
+  int distance = duration / 2 * 0.034;
+  return distance;
+}
+
+void setup() {
+  // Arduino-specific setup code:
+  pinMode(sendPin, OUTPUT); // Sets the sendPin as an OUTPUT
+  pinMode(receivePin, INPUT); // Sets the receivePin as an INPUT
+  pinMode(sendPin2, OUTPUT); // Sets the sendPin as an OUTPUT
+  pinMode(receivePin2, INPUT); // Sets the receivePin as an INPUT
+  Serial.begin(9600); // // Serial Communication is starting with 9600 of baudrate speed
+  delayMicroseconds(5000);
+
+}
+
+void loop() {
+
+  int dist1 = getDistance(sendPin, receivePin);
+  delayMicroseconds(2);
+  int dist2 = getDistance(sendPin2, receivePin2);
+  delayMicroseconds(2);
+  Serial.println(dist1);
+  delayMicroseconds(2);
+  Serial.println(dist2);
+
+  //if (distance < 2) {
+  //  Serial.println("Allan");
+  //}
+  
+  // if the calculated distance is shorter than the distance to the shroud (here 20 cm),
+  // the sensor has found something outside the capsule's shroud, potentially a baby's limb
+  //if (distance < 20) {
+    
+    // variables used for other functions made true
+    //turnACOnAnyways = true;
+    //alertEmergencyServicesEarlier = true;
+  //}
+}
