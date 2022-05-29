@@ -38,10 +38,19 @@ TBlendType                 currentBlending;
 //Misc Ultrasonic sensor stuff
 #define NUM_ULTRA_SENSORS   3
 #define DISTANCE_THRESHOLD  400 //change this as per your measurements :))
+#define DIST_TO_DELAY       80 //the number distance is multiplied to to get the delay in microseconds
+
+struct Sensor {
+  int trig;
+  int echo;
+};
+
+struct Sensor sensors[NUM_ULTRA_SENSORS];
 
 // Global Variables
 int brightness = 0;
 
+/*
 //This function returns an array containing how far away an object is from each sensor
 int * distanceDetected(){
   int buf[NUM_ULTRA_SENSORS] = {0};
@@ -50,6 +59,19 @@ int * distanceDetected(){
   }
 
   return buf;
+}
+*/
+
+//This function returns the closest distance detected by the ultrasonic sensors
+int getClosest() {
+  int closest = 401;
+
+  for (int i = 0; i < NUM_ULTRA_SENSORS; i++) {
+    int dist = getDistance(sensors[i].trig, sensors[i].echo);
+    if (dist < closest) closest = dist;
+  }
+  
+  return closest;
 }
 
 //This function writes colour to the LEDs 
@@ -83,6 +105,23 @@ int getDistance(int trigPin, int echoPin){
 void setup() {
   delay(3000); //power-up safely delay
   
+  Sensor tempSensor;
+
+  tempSensor.trig = ULTRASONIC_SENSOR_1_TRIG;
+  tempSensor.echo = ULTRASONIC_SENSOR_1_ECHO;
+
+  sensors[0] = tempSensor;
+
+  tempSensor.trig = ULTRASONIC_SENSOR_2_TRIG;
+  tempSensor.echo = ULTRASONIC_SENSOR_2_ECHO;
+
+  sensors[1] = tempSensor;
+
+  tempSensor.trig = ULTRASONIC_SENSOR_3_TRIG;
+  tempSensor.echo = ULTRASONIC_SENSOR_3_ECHO;
+
+  sensors[2] = tempSensor;
+
   //Initialise pins
   pinMode(ULTRASONIC_SENSOR_1_TRIG, OUTPUT); // Sets the sendPin as an OUTPUT
   pinMode(ULTRASONIC_SENSOR_1_ECHO, INPUT); // Sets the receivePin as an INPUT
@@ -104,7 +143,7 @@ void setup() {
 void loop() {
   static uint8_t startIndex = 0;
   startIndex += 1;
-  chase();
+  chase(5, CRGB(0, 255, 0));
 
   //Check sensors
   /*
@@ -168,15 +207,23 @@ void pulse() {
 }
 
 // NOT USED YET 
-// Turns on one LED at a time chronologically then loops back to the start
-void chase() {
+// Turns on len LEDs at a time chronologically with colour col then loops back to the start
+void chase(int len, CRGB col) {
   for (int ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++) {
-    int distance = getDistance(ULTRASONIC_SENSOR_1_TRIG, ULTRASONIC_SENSOR_1_ECHO);
+    int distance = getClosest();
     delayMicroseconds(2);
     Serial.println(distance);
     delayMicroseconds(2);
     int distDelay;
     // int tempDistance = getDistance(sendPin2, receivePin2);
+    
+    if (distance < DISTANCE_THRESHOLD) {
+      distDelay = distance * DIST_TO_DELAY;
+    } else {
+      distDelay = DISTANCE_THRESHOLD * DIST_TO_DELAY; // or we could just have it turned off?
+    }
+    
+    /*
     if (distance < 10) {
       distDelay = 500;
     } else if (distance > 9 && distance < DISTANCE_THRESHOLD){ 
@@ -184,20 +231,42 @@ void chase() {
     } else {
       distDelay = 10000000;
     } 
+    */
+
+
+    if (ledIndex == 0) {
+      light_seg(ledIndex, len, col); // turn on
+    } else {
+      leds[ledIndex - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
+      leds[(ledIndex + len - 1) % 360] = col; // turn on newly required LED
+    }
+
+    /*
     leds[ledIndex] = CRGB(0, 255, 0); // green colour
     leds[(ledIndex + 1) % 360] = CRGB(0, 255, 0); // green colour
     leds[(ledIndex + 2) % 360] = CRGB(0, 255, 0); // green colour
     leds[(ledIndex + 3) % 360] = CRGB(0, 255, 0); // green colour
     leds[(ledIndex + 4) % 360] = CRGB(0, 255, 0); // green colour
+    */
     FastLED.show();
+    /*
     leds[ledIndex] = CRGB(0, 0, 0); // turn off
-    leds[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // green colour
-    leds[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // green colour
-    leds[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // green colour
-    leds[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // green colour
+    leds[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // turn off
+    leds[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // turn off
+    leds[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // turn off
+    leds[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // turn off
+    */
     delayMicroseconds(distDelay);
   }
 
+}
+
+// Sets len LEDs starting at start to colour col
+// Wraps around
+void light_seg(int start, int len, CRGB col) {
+  for (int i = 0; i < len; i++) {
+    leds[(start + i) % NUM_LEDS] = col;
+  }
 }
 
 void light_all() {
