@@ -13,8 +13,8 @@
 
 //Initialise pins numbers
 #define LED_DATA_HAND                    5 //Data pin on digital pin 5
-#define LED_DATA_RIBBON_0           0
-#define LED_DATA_RIBBON_1           0
+#define LED_DATA_RIBBON_0           5
+#define LED_DATA_RIBBON_1           6
 #define LED_DATA_RIBBON_2           0
 #define LED_DATA_RIBBON_3           0
 #define LED_DATA_RIBBON_4           0
@@ -34,8 +34,10 @@
 #define NUM_LEDS_HAND      120 //120 LEDs on the strip we'll be using
 #define NUM_LEDS_RIBBON    150      
 #define UPDATES_PER_SECOND 100
+#define PULSE_LENGTH       30
+#define PULSE_DELAY        25
 CRGB leds_hand[NUM_LEDS_HAND];
-CRGB leds_ribbons[6][NUM_LEDS_RIBBON];
+CRGB leds_ribbons[2][NUM_LEDS_RIBBON];
 CRGBPalette16              currentPalette; //sets what colours we can use
 /*
  * can also use the following preset palettes for other colours:
@@ -57,6 +59,10 @@ struct Sensor sensors[NUM_ULTRA_SENSORS];
 
 // Global Variables
 int brightness = 0;
+int ribbon_i = 0;
+int hand_i = 0;
+int ribbon_time = 0;
+int hand_time = 0;
 
 /*
 //This function returns an array containing how far away an object is from each sensor
@@ -144,10 +150,10 @@ void setup() {
   FastLED.addLeds<LED_TYPE, LED_DATA_HAND, COLOUR_ORDER>(leds_hand, NUM_LEDS_HAND).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_0, COLOUR_ORDER>(leds_ribbons[0], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_1, COLOUR_ORDER>(leds_ribbons[1], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_2, COLOUR_ORDER>(leds_ribbons[2], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+/*  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_2, COLOUR_ORDER>(leds_ribbons[2], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_3, COLOUR_ORDER>(leds_ribbons[3], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_4, COLOUR_ORDER>(leds_ribbons[4], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-
+*/
 
 
   FastLED.setBrightness(  BRIGHTNESS );
@@ -159,8 +165,10 @@ void setup() {
 void loop() {
   static uint8_t startIndex = 0;
   startIndex += 1;
-  chase(5, CRGB(0, 255, 0));
+  //chase(5, CRGB(0, 255, 0));
+  //hand_i++;
 
+  ribbon();
   //Check sensors
   /*
   int * buf = distanceDetected();
@@ -206,6 +214,39 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex, int updated_brightness)
     }
 }
 
+void ribbon() {
+  if (millis() < ribbon_time) {
+    return;
+  }
+
+  ribbon_time = millis() + PULSE_DELAY;
+  
+  for (int i = 0; i < 2; i++) {
+    
+    if (ribbon_i == 0) {
+      leds_ribbons[i][NUM_LEDS_HAND - 1] = CRGB(0,0,0);
+      light_seg(ribbon_i, 15, CRGB(255,0,0), i); // turn on
+      
+    } else {
+      leds_ribbons[i][ribbon_i - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
+      leds_ribbons[i][(ribbon_i + PULSE_LENGTH - 1) % 360] = CRGB(255,0,0); // turn on newly required LED
+      
+      for (int i_trail = 0; i_trail < PULSE_LENGTH; i_trail++) {
+
+          leds_ribbons[i][ribbon_i + i_trail] = CRGB((int)(255 * ((float)i_trail/(float)PULSE_LENGTH)), 0, 0);  
+      }
+
+    }
+
+
+  }
+
+  
+  FastLED.show();
+  ribbon_i++;
+  ribbon_i = ribbon_i % NUM_LEDS_HAND;
+}
+
 // NOT USED YET 
 void pulse() {
   // to detect distance use distanceDetected()
@@ -225,63 +266,73 @@ void pulse() {
 // NOT USED YET 
 // Turns on len LEDs at a time chronologically with colour col then loops back to the start
 void chase(int len, CRGB col) {
-  for (int ledIndex = 0; ledIndex < NUM_LEDS_HAND; ledIndex++) {
-    int distance = getClosest();
-    delayMicroseconds(2);
-    Serial.println(distance);
-    delayMicroseconds(2);
-    int distDelay;
-    // int tempDistance = getDistance(sendPin2, receivePin2);
-    
-    if (distance < DISTANCE_THRESHOLD) {
-      distDelay = distance * DIST_TO_DELAY;
-    } else {
-      distDelay = DISTANCE_THRESHOLD * DIST_TO_DELAY; // or we could just have it turned off?
-    }
-    
-    /*
-    if (distance < 10) {
-      distDelay = 500;
-    } else if (distance > 9 && distance < DISTANCE_THRESHOLD){ 
-      distDelay = 100000;
-    } else {
-      distDelay = 10000000;
-    } 
-    */
-
-
-    if (ledIndex == 0) {
-      light_seg(ledIndex, len, col); // turn on
-    } else {
-      leds_hand[ledIndex - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
-      leds_hand[(ledIndex + len - 1) % 360] = col; // turn on newly required LED
-    }
-
-    /*
-    leds_hand[ledIndex] = CRGB(0, 255, 0); // green colour
-    leds_hand[(ledIndex + 1) % 360] = CRGB(0, 255, 0); // green colour
-    leds_hand[(ledIndex + 2) % 360] = CRGB(0, 255, 0); // green colour
-    leds_hand[(ledIndex + 3) % 360] = CRGB(0, 255, 0); // green colour
-    leds_hand[(ledIndex + 4) % 360] = CRGB(0, 255, 0); // green colour
-    */
-    FastLED.show();
-    /*
-    leds_hand[ledIndex] = CRGB(0, 0, 0); // turn off
-    leds_hand[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // turn off
-    leds_hand[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // turn off
-    leds_hand[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // turn off
-    leds_hand[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // turn off
-    */
-    delayMicroseconds(distDelay);
+  if (millis() < hand_time) {
+    return;
   }
+  
+  int distance = getClosest();
+  delayMicroseconds(2);
+  Serial.println(distance);
+  delayMicroseconds(2);
+  int distDelay;
+  // int tempDistance = getDistance(sendPin2, receivePin2);
+  
+  if (distance < DISTANCE_THRESHOLD) {
+    distDelay = distance * DIST_TO_DELAY;
+  } else {
+    distDelay = DISTANCE_THRESHOLD * DIST_TO_DELAY; // or we could just have it turned off?
+  }
+
+  hand_time = millis() + distDelay;
+  
+  /*
+  if (distance < 10) {
+    distDelay = 500;
+  } else if (distance > 9 && distance < DISTANCE_THRESHOLD){ 
+    distDelay = 100000;
+  } else {
+    distDelay = 10000000;
+  } 
+  */
+
+
+  if (hand_i == 0) {
+    light_seg(hand_i, len, col, -1); // turn on
+  } else {
+    leds_hand[hand_i - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
+    leds_hand[(hand_i + len - 1) % 360] = col; // turn on newly required LED
+  }
+
+  /*
+  leds_hand[ledIndex] = CRGB(0, 255, 0); // green colour
+  leds_hand[(ledIndex + 1) % 360] = CRGB(0, 255, 0); // green colour
+  leds_hand[(ledIndex + 2) % 360] = CRGB(0, 255, 0); // green colour
+  leds_hand[(ledIndex + 3) % 360] = CRGB(0, 255, 0); // green colour
+  leds_hand[(ledIndex + 4) % 360] = CRGB(0, 255, 0); // green colour
+  */
+  FastLED.show();
+  /*
+  leds_hand[ledIndex] = CRGB(0, 0, 0); // turn off
+  leds_hand[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // turn off
+  leds_hand[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // turn off
+  leds_hand[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // turn off
+  leds_hand[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // turn off
+  */
+  delayMicroseconds(distDelay);
 
 }
 
 // Sets len LEDs starting at start to colour col
 // Wraps around
-void light_seg(int start, int len, CRGB col) {
-  for (int i = 0; i < len; i++) {
-    leds_hand[(start + i) % NUM_LEDS_HAND] = col;
+void light_seg(int start, int len, CRGB col, int ribbon_num) {
+  if (ribbon_num != -1){
+    for (int i = 0; i < len; i++) {
+      leds_ribbons[ribbon_num][(start + i) % NUM_LEDS_HAND] = col;
+    }
+  } else {
+    for (int i = 0; i < len; i++) {
+      leds_hand[(start + i) % NUM_LEDS_HAND] = col;
+    }
   }
 }
 
