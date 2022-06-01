@@ -12,7 +12,13 @@
  #include <FastLED.h>
 
 //Initialise pins numbers
-#define LED_DATA                    5 //Data pin on digital pin 5
+#define LED_DATA_HAND                    5 //Data pin on digital pin 5
+#define LED_DATA_RIBBON_0           0
+#define LED_DATA_RIBBON_1           0
+#define LED_DATA_RIBBON_2           0
+#define LED_DATA_RIBBON_3           0
+#define LED_DATA_RIBBON_4           0
+#define LED_DATA_RIBBON_5           0
 
 #define ULTRASONIC_SENSOR_1_TRIG    9
 #define ULTRASONIC_SENSOR_1_ECHO    10
@@ -25,9 +31,11 @@
 #define COLOUR_ORDER       GRB
 #define LED_TYPE           WS2811
 #define BRIGHTNESS         64
-#define NUM_LEDS           360 //120 LEDs on the strip we'll be using
+#define NUM_LEDS_HAND      120 //120 LEDs on the strip we'll be using
+#define NUM_LEDS_RIBBON    150      
 #define UPDATES_PER_SECOND 100
-CRGB leds[NUM_LEDS];
+CRGB leds_hand[NUM_LEDS_HAND];
+CRGB leds_ribbons[6][NUM_LEDS_RIBBON];
 CRGBPalette16              currentPalette; //sets what colours we can use
 /*
  * can also use the following preset palettes for other colours:
@@ -133,7 +141,15 @@ void setup() {
   
 
   //Initialise LEDs
-  FastLED.addLeds<LED_TYPE, LED_DATA, COLOUR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_HAND, COLOUR_ORDER>(leds_hand, NUM_LEDS_HAND).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_0, COLOUR_ORDER>(leds_ribbons[0], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_1, COLOUR_ORDER>(leds_ribbons[1], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_2, COLOUR_ORDER>(leds_ribbons[2], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_3, COLOUR_ORDER>(leds_ribbons[3], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_4, COLOUR_ORDER>(leds_ribbons[4], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+
+
+
   FastLED.setBrightness(  BRIGHTNESS );
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
@@ -184,8 +200,8 @@ void loop() {
 void FillLEDsFromPaletteColors( uint8_t colorIndex, int updated_brightness)
 {
     
-    for( int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = ColorFromPalette( currentPalette, colorIndex, updated_brightness, currentBlending);
+    for( int i = 0; i < NUM_LEDS_HAND; i++) {
+        leds_hand[i] = ColorFromPalette( currentPalette, colorIndex, updated_brightness, currentBlending);
         colorIndex += 3;
     }
 }
@@ -209,7 +225,7 @@ void pulse() {
 // NOT USED YET 
 // Turns on len LEDs at a time chronologically with colour col then loops back to the start
 void chase(int len, CRGB col) {
-  for (int ledIndex = 0; ledIndex < NUM_LEDS; ledIndex++) {
+  for (int ledIndex = 0; ledIndex < NUM_LEDS_HAND; ledIndex++) {
     int distance = getClosest();
     delayMicroseconds(2);
     Serial.println(distance);
@@ -237,24 +253,24 @@ void chase(int len, CRGB col) {
     if (ledIndex == 0) {
       light_seg(ledIndex, len, col); // turn on
     } else {
-      leds[ledIndex - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
-      leds[(ledIndex + len - 1) % 360] = col; // turn on newly required LED
+      leds_hand[ledIndex - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
+      leds_hand[(ledIndex + len - 1) % 360] = col; // turn on newly required LED
     }
 
     /*
-    leds[ledIndex] = CRGB(0, 255, 0); // green colour
-    leds[(ledIndex + 1) % 360] = CRGB(0, 255, 0); // green colour
-    leds[(ledIndex + 2) % 360] = CRGB(0, 255, 0); // green colour
-    leds[(ledIndex + 3) % 360] = CRGB(0, 255, 0); // green colour
-    leds[(ledIndex + 4) % 360] = CRGB(0, 255, 0); // green colour
+    leds_hand[ledIndex] = CRGB(0, 255, 0); // green colour
+    leds_hand[(ledIndex + 1) % 360] = CRGB(0, 255, 0); // green colour
+    leds_hand[(ledIndex + 2) % 360] = CRGB(0, 255, 0); // green colour
+    leds_hand[(ledIndex + 3) % 360] = CRGB(0, 255, 0); // green colour
+    leds_hand[(ledIndex + 4) % 360] = CRGB(0, 255, 0); // green colour
     */
     FastLED.show();
     /*
-    leds[ledIndex] = CRGB(0, 0, 0); // turn off
-    leds[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // turn off
-    leds[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // turn off
-    leds[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // turn off
-    leds[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // turn off
+    leds_hand[ledIndex] = CRGB(0, 0, 0); // turn off
+    leds_hand[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // turn off
+    leds_hand[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // turn off
+    leds_hand[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // turn off
+    leds_hand[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // turn off
     */
     delayMicroseconds(distDelay);
   }
@@ -265,13 +281,13 @@ void chase(int len, CRGB col) {
 // Wraps around
 void light_seg(int start, int len, CRGB col) {
   for (int i = 0; i < len; i++) {
-    leds[(start + i) % NUM_LEDS] = col;
+    leds_hand[(start + i) % NUM_LEDS_HAND] = col;
   }
 }
 
 void light_all() {
   for (int i = 0; i < 120; i++) {
-    leds[i] = CRGB(0, 255, 0); // green colour
+    leds_hand[i] = CRGB(0, 255, 0); // green colour
     FastLED.show();
   }
 }
