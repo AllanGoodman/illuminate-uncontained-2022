@@ -231,9 +231,10 @@ void ribbon() {
       leds_ribbons[i][ribbon_i - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
       leds_ribbons[i][(ribbon_i + PULSE_LENGTH - 1) % 360] = CRGB(255,0,0); // turn on newly required LED
       
-      for (int i_trail = 0; i_trail < PULSE_LENGTH; i_trail++) {
-
-          leds_ribbons[i][ribbon_i + i_trail] = CRGB((int)(255 * ((float)i_trail/(float)PULSE_LENGTH)), 0, 0);  
+      for (int i_trail = 1 - PULSE_LENGTH; i_trail < PULSE_LENGTH; i_trail++) {
+          if (i_trail >= 0) {
+            leds_ribbons[i][ribbon_i + i_trail] = CRGB((int)(255 * ((float)i_trail/(float)PULSE_LENGTH)), 0, 0);
+          }
       }
 
     }
