@@ -28,7 +28,8 @@
 #define ULTRASONIC_SENSOR_3_ECHO    0
 
 #define HAND_FLASH_DELAY_DEFAULT    5000
-#define HAND_FLASH_DURATION         2000
+#define HAND_FLASH_DURATION         1000
+#define HAND_BRIGHTNESS             100 // Peak brightness of hand
 
 //Misc LED initialisation stuff
 #define COLOUR_ORDER       GRB
@@ -51,7 +52,7 @@ TBlendType                 currentBlending;
 //Misc Ultrasonic sensor stuff
 #define NUM_ULTRA_SENSORS   3
 #define DISTANCE_THRESHOLD  400 //change this as per your measurements :))
-#define DIST_TO_DELAY       80 //the number distance is multiplied to to get the delay in microseconds
+#define DIST_TO_DELAY       10 //the number distance is multiplied to to get the delay in microseconds
 
 struct Sensor {
   int trig;
@@ -83,11 +84,11 @@ int * distanceDetected(){
 //This function returns the closest distance detected by the ultrasonic sensors
 int getClosest() {
   int closest = getDistance(sensors[0].trig, sensors[0].echo);
-
+/* TODO : commented out for testing
   for (int i = 1; i < NUM_ULTRA_SENSORS; i++) {
     int dist = getDistance(sensors[i].trig, sensors[i].echo);
     if (dist < closest) closest = dist;
-  }
+  }*/
   
   return closest;
 }
@@ -286,17 +287,20 @@ void hand() {
     last_hand_time = millis() + HAND_FLASH_DURATION;
     // Set next hand_time
     hand_time = last_hand_time + HAND_FLASH_DELAY_DEFAULT;
-    light_all_hand(CRGB(100,100,0));
+    
     return;
   }
 
   int closest = getClosest();
+  Serial.println(closest);
   if (closest > DISTANCE_THRESHOLD) {
     return;
   } else {
     int curr_delay = hand_time - last_hand_time;
     if (curr_delay > (closest * DIST_TO_DELAY)) {
       hand_time = last_hand_time + (closest * DIST_TO_DELAY);
+      Serial.println("delay");
+      Serial.println(closest * DIST_TO_DELAY);
     }
   }
 
@@ -306,7 +310,19 @@ void hand() {
 void hand_flash() {
   if (start_flash) {
     //flashing
-    //light_all_hand(CRGB())
+    
+    int calc_brightness = 0;
+    if (millis() >= (start_flash + 4 * HAND_FLASH_DURATION/5)) {
+      // brightness down
+      calc_brightness = (HAND_BRIGHTNESS * (1 - (float)(millis() - start_flash - 4 * HAND_FLASH_DURATION/5)/(HAND_FLASH_DURATION/5)));
+    } else if (millis() <= (start_flash + HAND_FLASH_DURATION/5)) {
+      // brightness up
+      calc_brightness = (HAND_BRIGHTNESS * (float)(millis() - start_flash)/(HAND_FLASH_DURATION/5));
+    } else {
+      calc_brightness = HAND_BRIGHTNESS;
+    }
+    light_all_hand(CRGB(calc_brightness,(int)(calc_brightness/1.25),0));
+    
 
   }
 }
@@ -314,6 +330,6 @@ void hand_flash() {
 void light_all_hand(CRGB col) {
   for (int i = 0; i < NUM_LEDS_HAND; i++) {
     leds_hand[i] = col; 
-    FastLED.show();
   }
+  FastLED.show();
 }
