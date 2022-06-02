@@ -12,24 +12,27 @@
  #include <FastLED.h>
 
 //Initialise pins numbers
-#define LED_DATA_HAND                    5 //Data pin on digital pin 5
-#define LED_DATA_RIBBON_0           5
-#define LED_DATA_RIBBON_1           6
+#define LED_DATA_HAND               5 //Data pin on digital pin 5
+#define LED_DATA_RIBBON_0           2
+#define LED_DATA_RIBBON_1           3
 #define LED_DATA_RIBBON_2           0
 #define LED_DATA_RIBBON_3           0
 #define LED_DATA_RIBBON_4           0
 #define LED_DATA_RIBBON_5           0
 
-#define ULTRASONIC_SENSOR_1_TRIG    9
-#define ULTRASONIC_SENSOR_1_ECHO    10
+#define ULTRASONIC_SENSOR_1_TRIG    7
+#define ULTRASONIC_SENSOR_1_ECHO    6
 #define ULTRASONIC_SENSOR_2_TRIG    0
 #define ULTRASONIC_SENSOR_2_ECHO    0
 #define ULTRASONIC_SENSOR_3_TRIG    0
 #define ULTRASONIC_SENSOR_3_ECHO    0
 
+#define HAND_FLASH_DELAY_DEFAULT    5000
+#define HAND_FLASH_DURATION         2000
+
 //Misc LED initialisation stuff
 #define COLOUR_ORDER       GRB
-#define LED_TYPE           WS2811
+#define LED_TYPE           WS2812B
 #define BRIGHTNESS         64
 #define NUM_LEDS_HAND      120 //120 LEDs on the strip we'll be using
 #define NUM_LEDS_RIBBON    150      
@@ -61,9 +64,10 @@ struct Sensor sensors[NUM_ULTRA_SENSORS];
 int brightness = 0;
 int ribbon_i = 0;
 int hand_i = 0;
-int ribbon_time = 0;
-int hand_time = 0;
-
+uint32_t ribbon_time = 0;
+uint32_t hand_time = 0;
+uint32_t last_hand_time = 0; 
+uint32_t start_flash = 0; // If 0, that means not flashing
 /*
 //This function returns an array containing how far away an object is from each sensor
 int * distanceDetected(){
@@ -78,9 +82,9 @@ int * distanceDetected(){
 
 //This function returns the closest distance detected by the ultrasonic sensors
 int getClosest() {
-  int closest = 401;
+  int closest = getDistance(sensors[0].trig, sensors[0].echo);
 
-  for (int i = 0; i < NUM_ULTRA_SENSORS; i++) {
+  for (int i = 1; i < NUM_ULTRA_SENSORS; i++) {
     int dist = getDistance(sensors[i].trig, sensors[i].echo);
     if (dist < closest) closest = dist;
   }
@@ -169,6 +173,8 @@ void loop() {
   //hand_i++;
 
   ribbon();
+  hand();
+  hand_flash();
   //Check sensors
   /*
   int * buf = distanceDetected();
@@ -248,80 +254,8 @@ void ribbon() {
   ribbon_i = ribbon_i % NUM_LEDS_HAND;
 }
 
-// NOT USED YET 
-void pulse() {
-  // to detect distance use distanceDetected()
-  for (int brightness = 0; brightness < 256;  brightness+= 8) {
-    FastLED.setBrightness(brightness);
-    FastLED.show();
-    delay(300);
-  }
-  
-  for (int brightness = 255; brightness >= 0; brightness -= 8) {
-    FastLED.setBrightness(brightness);
-    FastLED.show();
-    delay(300);
-  }
-}
-
-// NOT USED YET 
-// Turns on len LEDs at a time chronologically with colour col then loops back to the start
-void chase(int len, CRGB col) {
-  if (millis() < hand_time) {
-    return;
-  }
-  
-  int distance = getClosest();
-  delayMicroseconds(2);
-  Serial.println(distance);
-  delayMicroseconds(2);
-  int distDelay;
-  // int tempDistance = getDistance(sendPin2, receivePin2);
-  
-  if (distance < DISTANCE_THRESHOLD) {
-    distDelay = distance * DIST_TO_DELAY;
-  } else {
-    distDelay = DISTANCE_THRESHOLD * DIST_TO_DELAY; // or we could just have it turned off?
-  }
-
-  hand_time = millis() + distDelay;
-  
-  /*
-  if (distance < 10) {
-    distDelay = 500;
-  } else if (distance > 9 && distance < DISTANCE_THRESHOLD){ 
-    distDelay = 100000;
-  } else {
-    distDelay = 10000000;
-  } 
-  */
 
 
-  if (hand_i == 0) {
-    light_seg(hand_i, len, col, -1); // turn on
-  } else {
-    leds_hand[hand_i - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
-    leds_hand[(hand_i + len - 1) % 360] = col; // turn on newly required LED
-  }
-
-  /*
-  leds_hand[ledIndex] = CRGB(0, 255, 0); // green colour
-  leds_hand[(ledIndex + 1) % 360] = CRGB(0, 255, 0); // green colour
-  leds_hand[(ledIndex + 2) % 360] = CRGB(0, 255, 0); // green colour
-  leds_hand[(ledIndex + 3) % 360] = CRGB(0, 255, 0); // green colour
-  leds_hand[(ledIndex + 4) % 360] = CRGB(0, 255, 0); // green colour
-  */
-  FastLED.show();
-  /*
-  leds_hand[ledIndex] = CRGB(0, 0, 0); // turn off
-  leds_hand[(ledIndex + 1) % 360] = CRGB(0, 0, 0); // turn off
-  leds_hand[(ledIndex + 2) % 360] = CRGB(0, 0, 0); // turn off
-  leds_hand[(ledIndex + 3) % 360] = CRGB(0, 0, 0); // turn off
-  leds_hand[(ledIndex + 4) % 360] = CRGB(0, 0, 0); // turn off
-  */
-  delayMicroseconds(distDelay);
-
-}
 
 // Sets len LEDs starting at start to colour col
 // Wraps around
@@ -337,9 +271,49 @@ void light_seg(int start, int len, CRGB col, int ribbon_num) {
   }
 }
 
-void light_all() {
-  for (int i = 0; i < 120; i++) {
-    leds_hand[i] = CRGB(0, 255, 0); // green colour
+void hand() {
+  if (start_flash != 0 && (millis() >= (last_hand_time))) {
+    start_flash = 0;
+    light_all_hand(CRGB(0,0,0));
+  } else if (start_flash) {
+    // Still flashing
+    return;
+  }
+
+  if (millis() >= hand_time) {
+    // flash
+    start_flash = millis();
+    last_hand_time = millis() + HAND_FLASH_DURATION;
+    // Set next hand_time
+    hand_time = last_hand_time + HAND_FLASH_DELAY_DEFAULT;
+    light_all_hand(CRGB(100,100,0));
+    return;
+  }
+
+  int closest = getClosest();
+  if (closest > DISTANCE_THRESHOLD) {
+    return;
+  } else {
+    int curr_delay = hand_time - last_hand_time;
+    if (curr_delay > (closest * DIST_TO_DELAY)) {
+      hand_time = last_hand_time + (closest * DIST_TO_DELAY);
+    }
+  }
+
+
+}
+
+void hand_flash() {
+  if (start_flash) {
+    //flashing
+    //light_all_hand(CRGB())
+
+  }
+}
+
+void light_all_hand(CRGB col) {
+  for (int i = 0; i < NUM_LEDS_HAND; i++) {
+    leds_hand[i] = col; 
     FastLED.show();
   }
 }
