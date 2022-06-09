@@ -12,20 +12,20 @@
  #include <FastLED.h>
 
 //Initialise pins numbers
-#define LED_DATA_HAND                    5 //Data pin on digital pin 5
-#define LED_DATA_RIBBON_0           5
-#define LED_DATA_RIBBON_1           6
-#define LED_DATA_RIBBON_2           0
-#define LED_DATA_RIBBON_3           0
-#define LED_DATA_RIBBON_4           0
-#define LED_DATA_RIBBON_5           0
+#define LED_DATA_HAND               2 //Data pin on digital pin 5
+#define LED_DATA_RIBBON_0           3
+#define LED_DATA_RIBBON_1           4
+#define LED_DATA_RIBBON_2           5
+#define LED_DATA_RIBBON_3           6
+#define LED_DATA_RIBBON_4           7
+#define LED_DATA_RIBBON_5           8
 
-#define ULTRASONIC_SENSOR_1_TRIG    9
-#define ULTRASONIC_SENSOR_1_ECHO    10
-#define ULTRASONIC_SENSOR_2_TRIG    0
-#define ULTRASONIC_SENSOR_2_ECHO    0
-#define ULTRASONIC_SENSOR_3_TRIG    0
-#define ULTRASONIC_SENSOR_3_ECHO    0
+#define ULTRASONIC_SENSOR_1_TRIG    22
+#define ULTRASONIC_SENSOR_1_ECHO    23
+#define ULTRASONIC_SENSOR_2_TRIG    24
+#define ULTRASONIC_SENSOR_2_ECHO    25
+#define ULTRASONIC_SENSOR_3_TRIG    26
+#define ULTRASONIC_SENSOR_3_ECHO    27
 
 //Misc LED initialisation stuff
 #define COLOUR_ORDER       GRB

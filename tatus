@@ -1,0 +1,39 @@
+[1mdiff --git a/illuminate_uncontained/illuminate_uncontained.ino b/illuminate_uncontained/illuminate_uncontained.ino[m
+[1mindex 71ee003..7ce2945 100644[m
+[1m--- a/illuminate_uncontained/illuminate_uncontained.ino[m
+[1m+++ b/illuminate_uncontained/illuminate_uncontained.ino[m
+[36m@@ -12,20 +12,20 @@[m
+  #include <FastLED.h>[m
+ [m
+ //Initialise pins numbers[m
+[31m-#define LED_DATA_HAND                    5 //Data pin on digital pin 5[m
+[31m-#define LED_DATA_RIBBON_0           5[m
+[31m-#define LED_DATA_RIBBON_1           6[m
+[31m-#define LED_DATA_RIBBON_2           0[m
+[31m-#define LED_DATA_RIBBON_3           0[m
+[31m-#define LED_DATA_RIBBON_4           0[m
+[31m-#define LED_DATA_RIBBON_5           0[m
+[31m-[m
+[31m-#define ULTRASONIC_SENSOR_1_TRIG    9[m
+[31m-#define ULTRASONIC_SENSOR_1_ECHO    10[m
+[31m-#define ULTRASONIC_SENSOR_2_TRIG    0[m
+[31m-#define ULTRASONIC_SENSOR_2_ECHO    0[m
+[31m-#define ULTRASONIC_SENSOR_3_TRIG    0[m
+[31m-#define ULTRASONIC_SENSOR_3_ECHO    0[m
+[32m+[m[32m#define LED_DATA_HAND               2 //Data pin on digital pin 5[m
+[32m+[m[32m#define LED_DATA_RIBBON_0           3[m
+[32m+[m[32m#define LED_DATA_RIBBON_1           4[m
+[32m+[m[32m#define LED_DATA_RIBBON_2           5[m
+[32m+[m[32m#define LED_DATA_RIBBON_3           6[m
+[32m+[m[32m#define LED_DATA_RIBBON_4           7[m
+[32m+[m[32m#define LED_DATA_RIBBON_5           8[m
+[32m+[m
+[32m+[m[32m#define ULTRASONIC_SENSOR_1_TRIG    22[m
+[32m+[m[32m#define ULTRASONIC_SENSOR_1_ECHO    23[m
+[32m+[m[32m#define ULTRASONIC_SENSOR_2_TRIG    24[m
+[32m+[m[32m#define ULTRASONIC_SENSOR_2_ECHO    25[m
+[32m+[m[32m#define ULTRASONIC_SENSOR_3_TRIG    26[m
+[32m+[m[32m#define ULTRASONIC_SENSOR_3_ECHO    27[m
+ [m
+ //Misc LED initialisation stuff[m
+ #define COLOUR_ORDER       GRB[m
