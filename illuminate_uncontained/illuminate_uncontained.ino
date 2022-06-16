@@ -13,9 +13,9 @@
 
 //Initialise pins numbers
 #define LED_DATA_HAND               5 //Data pin on digital pin 5
-#define LED_DATA_RIBBON_0           2
-#define LED_DATA_RIBBON_1           3
-#define LED_DATA_RIBBON_2           0
+#define LED_DATA_RIBBON_0           3
+#define LED_DATA_RIBBON_1           6
+#define LED_DATA_RIBBON_2           4
 #define LED_DATA_RIBBON_3           0
 #define LED_DATA_RIBBON_4           0
 #define LED_DATA_RIBBON_5           0
@@ -40,8 +40,10 @@
 #define UPDATES_PER_SECOND 100
 #define PULSE_LENGTH       30
 #define PULSE_DELAY        25
+#define NUM_RIBBONS        3
+
 CRGB leds_hand[NUM_LEDS_HAND];
-CRGB leds_ribbons[2][NUM_LEDS_RIBBON];
+CRGB leds_ribbons[NUM_RIBBONS][NUM_LEDS_RIBBON];
 CRGBPalette16              currentPalette; //sets what colours we can use
 /*
  * can also use the following preset palettes for other colours:
@@ -154,11 +156,11 @@ void setup() {
   //Initialise LEDs
   FastLED.addLeds<LED_TYPE, LED_DATA_HAND, COLOUR_ORDER>(leds_hand, NUM_LEDS_HAND).setCorrection( TypicalLEDStrip );
   FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_0, COLOUR_ORDER>(leds_ribbons[0], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_1, COLOUR_ORDER>(leds_ribbons[1], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-/*  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_2, COLOUR_ORDER>(leds_ribbons[2], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_3, COLOUR_ORDER>(leds_ribbons[3], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-  FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_4, COLOUR_ORDER>(leds_ribbons[4], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
-*/
+  if (NUM_RIBBONS > 1) FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_1, COLOUR_ORDER>(leds_ribbons[1], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  if (NUM_RIBBONS > 2) FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_2, COLOUR_ORDER>(leds_ribbons[2], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  if (NUM_RIBBONS > 3) FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_3, COLOUR_ORDER>(leds_ribbons[3], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+  if (NUM_RIBBONS > 4) FastLED.addLeds<LED_TYPE, LED_DATA_RIBBON_4, COLOUR_ORDER>(leds_ribbons[4], NUM_LEDS_RIBBON).setCorrection( TypicalLEDStrip );
+
 
 
   FastLED.setBrightness(  BRIGHTNESS );
@@ -174,8 +176,8 @@ void loop() {
   //hand_i++;
 
   ribbon();
-  hand();
-  hand_flash();
+  //hand();
+  //hand_flash();
   //Check sensors
   /*
   int * buf = distanceDetected();
@@ -228,15 +230,15 @@ void ribbon() {
 
   ribbon_time = millis() + PULSE_DELAY;
   
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < NUM_RIBBONS; i++) {
     
     if (ribbon_i == 0) {
       leds_ribbons[i][NUM_LEDS_HAND - 1] = CRGB(0,0,0);
-      light_seg(ribbon_i, 15, CRGB(255,0,0), i); // turn on
+      //light_seg(ribbon_i, 15, CRGB(255,0,0), i); // turn on
       
     } else {
       leds_ribbons[i][ribbon_i - 1] = CRGB(0, 0, 0); // turn off unused LED from previous sequence
-      leds_ribbons[i][(ribbon_i + PULSE_LENGTH - 1) % 360] = CRGB(255,0,0); // turn on newly required LED
+      leds_ribbons[i][(ribbon_i + PULSE_LENGTH - 1) /*% NUM_LEDS_RIBBON*/] = CRGB(255,0,0); // turn on newly required LED
       
       for (int i_trail = 1 - PULSE_LENGTH; i_trail < PULSE_LENGTH; i_trail++) {
           if (i_trail >= 0) {
@@ -326,6 +328,7 @@ void hand_flash() {
 
   }
 }
+
 
 void light_all_hand(CRGB col) {
   for (int i = 0; i < NUM_LEDS_HAND; i++) {
